@@ -26,14 +26,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-!os&h2-zafylrqes$g9=spk^z@$nt7$shx39+zp7!j)xp$%7j)'
 
 # SP api authetication keys
+LWA_AUTHENTICATION = {
+    'LWA_APP_ID': os.environ.get('LWA_APP_ID'),
+    'LWA_CLIENT_SECRET': os.environ.get('LWA_CLIENT_SECRET'),
+    'AWS_SECRET_ACCESS_KEY': os.environ.get('AWS_SECRET_ACCESS_KEY'),
+    'AWS_ACCESS_KEY_ID': os.environ.get('AWS_ACCESS_KEY_ID'),
+    'ROLE_ARN': os.environ.get('ROLE_ARN'),
+    'REFRESH_TOKEN': os.environ.get('REFRESH_TOKEN'),
+}
 
-LWA_APP_ID = os.environ.get('LWA_APP_ID')
-LWA_CLIENT_SECRET = os.environ.get('LWA_CLIENT_SECRET')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-ROLE_ARN = os.environ.get('ROLE_ARN')
-REFRESH_TOKEN = os.environ.get('REFRESH_TOKEN')
-print(LWA_APP_ID)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -50,7 +51,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'core',
+    'spapi',
 ]
 
 MIDDLEWARE = [
@@ -90,10 +93,11 @@ WSGI_APPLICATION = 'app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        # 'HOST': os.environ.get('DB_HOST'),
-        # 'NAME': os.environ.get('DB_NAME'),
-        # 'USER': os.environ.get('DB_USER'),
-        # 'PASSWORD': os.environ.get('DB_PASS'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASS'),
     }
 }
 
