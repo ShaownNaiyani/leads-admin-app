@@ -35,7 +35,6 @@ LWA_AUTHENTICATION = {
     'REFRESH_TOKEN': os.environ.get('REFRESH_TOKEN'),
 }
 
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -54,6 +53,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'core',
     'spapi',
+    'leads',
 ]
 
 MIDDLEWARE = [
