@@ -1,4 +1,5 @@
-import json
+# from apscheduler.schedulers.background import BackgroundScheduler
+# from datetime import datetime
 from typing import Any
 from rest_framework import viewsets
 from rest_framework.views import APIView
@@ -11,8 +12,7 @@ from django.http import JsonResponse
 from requests_aws4auth import AWS4Auth
 import boto3
 import requests
-
-# Create your views here.
+import json
 
 
 class AmazonAuthenticationCreds(APIView):
@@ -37,7 +37,6 @@ class LwaTokens(APIView):
     def post(self, request, *args, **kwargs):
         url = "https://api.amazon.com/auth/o2/token"
 
-        # Define the request body
         data = {
             "grant_type": "refresh_token",
             "client_id": settings.LWA_AUTHENTICATION['LWA_APP_ID'],
@@ -49,7 +48,6 @@ class LwaTokens(APIView):
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
         }
 
-        # Send the POST request
         response = requests.post(url, data=data, headers=headers)
 
         if response.ok:
@@ -69,7 +67,6 @@ class TokenManager:
     def generateNewLwaToken(self):
         url = "https://api.amazon.com/auth/o2/token"
 
-        # Define the request body
         data = {
             "grant_type": "refresh_token",
             "client_id": settings.LWA_AUTHENTICATION['LWA_APP_ID'],
@@ -81,7 +78,6 @@ class TokenManager:
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
         }
 
-        # Send the POST request
         response = requests.post(url, data=data, headers=headers)
 
         if response.ok:
@@ -113,8 +109,9 @@ class TokenManager:
 class GetDataFromSpApi(APIView):
     def __init__(self):
         self.tokens_manager = TokenManager()
-        lwa_token_generated = self.tokens_manager.generateNewLwaToken()
-        lwa_token_generated = self.tokens_manager.generateNewStsKeysAndToken()
+        self.tokens_manager.generateNewLwaToken()
+        self.tokens_manager.generateNewStsKeysAndToken()
+        self.LISTPRICENOTFOUND = -1
 
     def fetchCatalogItemApiData(self, asin, marketplace_id):
         path = f"/catalog/2022-04-01/items/{asin}?marketplaceIds={marketplace_id}&includedData=attributes,identifiers,images,productTypes,salesRanks,summaries"
@@ -133,7 +130,6 @@ class GetDataFromSpApi(APIView):
 
         url = f"https://{host}{path}"
 
-        # Send the signed request
         response = requests.get(url, auth=auth, headers={
                                 'x-amz-access-token': self.tokens_manager.access_token})
         if (response.ok):
@@ -215,7 +211,6 @@ class GetDataFromSpApi(APIView):
 
         url = f"https://{host}{path}"
 
-        # Send the signed request
         response = requests.get(url, auth=auth, headers={
                                 'x-amz-access-token': self.tokens_manager.access_token})
 
@@ -228,18 +223,18 @@ class GetDataFromSpApi(APIView):
     def get(self, request, *args, **kwargs):
         leads_data = {
             "asin": "",
-            "ProductImage": "",
-            "ProductName": "",
-            "AmazonFBAEstimatedFees": "",
-            "EstimatedSalesRank": "",
-            "AmazonPrice": "",
-            "NumberOfSellersOnTheListing": "",
+            "product_image_url": "",
+            "product_name": "",
+            "amazon_fba_estimated_fees": "",
+            "estimated_sales_rank": "",
+            "amazon_price": "",
+            "number_of_sellers_on_listing": "",
         }
-        # Assuming you are getting 'asin' and 'marketplace_id' from the request query parameters
+
         asin = request.query_params.get('asin')
-        marketplace_id = request.query_params.get('marketplace_id')
-        list_price = -1
-        # Check if 'asin' and 'marketplace_id' are provided
+        marketplace_id = request.query_params.get('marketplaceId')
+        list_price = self.LISTPRICENOTFOUND
+
         if not asin or not marketplace_id:
             return Response({'error': 'Both "asin" and "marketplaceId" are required in the query parameters'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -247,24 +242,24 @@ class GetDataFromSpApi(APIView):
         catalog_json_data = self.fetchCatalogItemApiData(asin, marketplace_id)
 
         leads_data["asin"] = catalog_json_data["asin"]
-        leads_data["ProductName"] = catalog_json_data["attributes"]["item_name"][0]["value"]
-        leads_data["ProductImage"] = catalog_json_data["images"][0]["images"][0]["link"]
-        leads_data["EstimatedSalesRank"] = catalog_json_data["salesRanks"][0]["displayGroupRanks"][0]["rank"]
+        leads_data["product_name"] = catalog_json_data["attributes"]["item_name"][0]["value"]
+        leads_data["product_image_url"] = catalog_json_data["images"][0]["images"][0]["link"]
+        leads_data["estimated_sales_rank"] = catalog_json_data["salesRanks"][0]["displayGroupRanks"][0]["rank"]
 
         if catalog_json_data["attributes"].get("list_price") is not None:
             list_price = catalog_json_data["attributes"]["list_price"][0]["value"]
-            leads_data["AmazonPrice"] = catalog_json_data["attributes"]["list_price"][0]["value"]
+            leads_data["amazon_price"] = catalog_json_data["attributes"]["list_price"][0]["value"]
         else:
             print("list price not available")
 
-        if list != -1:
+        if list_price != self.LISTPRICENOTFOUND:
             amazon_fba_json_data = self.fetchAmazonFbaFees(
                 asin, list_price, marketplace_id)
-            leads_data["AmazonFBAEstimatedFees"] = amazon_fba_json_data["payload"][
+            leads_data["amazon_fba_estimated_fees"] = amazon_fba_json_data["payload"][
                 "FeesEstimateResult"]["FeesEstimate"]["TotalFeesEstimate"]["Amount"]
         product_price_json_data = self.fetchProductPriceData(
             asin, marketplace_id)
-        leads_data["NumberOfSellersOnTheListing"] = len(
+        leads_data["number_of_sellers_on_listing"] = len(
             product_price_json_data["payload"]["Offers"])
 
         return JsonResponse(leads_data, status=status.HTTP_200_OK, safe=False)

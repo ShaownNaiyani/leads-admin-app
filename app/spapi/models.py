@@ -1,5 +1,7 @@
 from django.db import models
 
+from simple_history.models import HistoricalRecords
+
 # Create your models here.
 
 
@@ -7,6 +9,8 @@ class LeadsData(models.Model):
     """store all fetched data"""
     asin = models.CharField(max_length=255, unique=True, primary_key=True,
                             blank=False, null=False, verbose_name="ASIN", db_column='asin')
+    product_name = models.CharField(max_length=255,
+                                    blank=True, null=True, verbose_name="product_name")
     amazon_fba_estimated_fees = models.DecimalField(blank=True, null=True,
                                                     max_digits=10, decimal_places=2, verbose_name="AmazonFBAEstimatedFees")
     amazon_price = models.DecimalField(blank=True, null=True,
@@ -45,6 +49,8 @@ class LeadsData(models.Model):
                                                       max_digits=10, decimal_places=2,  null=True, verbose_name="EstimatedNetProfitMargin")
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.asin
