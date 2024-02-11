@@ -241,26 +241,56 @@ class GetDataFromSpApi(APIView):
 
         catalog_json_data = self.fetchCatalogItemApiData(asin, marketplace_id)
 
-        leads_data["asin"] = catalog_json_data["asin"]
-        leads_data["product_name"] = catalog_json_data["attributes"]["item_name"][0]["value"]
-        leads_data["product_image_url"] = catalog_json_data["images"][0]["images"][0]["link"]
-        leads_data["estimated_sales_rank"] = catalog_json_data["salesRanks"][0]["displayGroupRanks"][0]["rank"]
+        if "asin" in catalog_json_data:
+            leads_data["asin"] = catalog_json_data["asin"]
+        if "attributes" in catalog_json_data \
+                and catalog_json_data["attributes"] \
+                and "item_name" in catalog_json_data["attributes"] \
+                and catalog_json_data["attributes"]["item_name"] \
+                and len(catalog_json_data["attributes"]["item_name"]) > 0 \
+                and "values" in catalog_json_data["attributes"]["item_name"][0]:
+            leads_data["product_name"] = catalog_json_data["attributes"]["item_name"][0]["value"]
+        if "images" in catalog_json_data \
+                and catalog_json_data["images"] \
+                and len(catalog_json_data["images"]) > 0 \
+                and "images" in catalog_json_data["images"][0] \
+                and catalog_json_data["images"][0]["images"] \
+                and len(catalog_json_data["images"][0]["images"]) > 0 \
+                and "link" in catalog_json_data["images"][0]["images"][0]:
+            leads_data["product_image_url"] = catalog_json_data["images"][0]["images"][0]["link"]
 
-        if catalog_json_data["attributes"].get("list_price") is not None:
-            list_price = catalog_json_data["attributes"]["list_price"][0]["value"]
-            leads_data["amazon_price"] = catalog_json_data["attributes"]["list_price"][0]["value"]
-        else:
-            print("list price not available")
+        if "salesRanks" in catalog_json_data \
+                and catalog_json_data["salesRanks"] \
+                and "displayGroupRanks" in catalog_json_data["salesRanks"][0] \
+                and catalog_json_data["salesRanks"][0]["displayGroupRanks"] \
+                and catalog_json_data["salesRanks"][0]["displayGroupRanks"][0] \
+                and "rank" in catalog_json_data["salesRanks"][0]["displayGroupRanks"][0]:
+            leads_data["estimated_sales_rank"] = catalog_json_data["salesRanks"][0]["displayGroupRanks"][0]["rank"]
+
+        if "attributes" in catalog_json_data and catalog_json_data["attributes"]:
+            list_price_data = catalog_json_data["attributes"].get("list_price")
+            if list_price_data is not None and list_price_data:
+                list_price_value = list_price_data[0]["value"]
+                leads_data["amazon_price"] = list_price_value
 
         if list_price != self.LISTPRICENOTFOUND:
             amazon_fba_json_data = self.fetchAmazonFbaFees(
                 asin, list_price, marketplace_id)
-            leads_data["amazon_fba_estimated_fees"] = amazon_fba_json_data["payload"][
-                "FeesEstimateResult"]["FeesEstimate"]["TotalFeesEstimate"]["Amount"]
+            if "payload" in amazon_fba_json_data \
+                    and "FeesEstimateResult" in amazon_fba_json_data["payload"] \
+                    and "FeesEstimate" in amazon_fba_json_data["payload"]["FeesEstimateResult"] \
+                    and "TotalFeesEstimate" in amazon_fba_json_data["payload"]["FeesEstimateResult"]["FeesEstimate"] \
+                    and "Amount" in amazon_fba_json_data["payload"]["FeesEstimateResult"]["FeesEstimate"]["TotalFeesEstimate"]:
+                leads_data["amazon_fba_estimated_fees"] = amazon_fba_json_data["payload"][
+                    "FeesEstimateResult"]["FeesEstimate"]["TotalFeesEstimate"]["Amount"]
         product_price_json_data = self.fetchProductPriceData(
             asin, marketplace_id)
-        leads_data["number_of_sellers_on_listing"] = len(
-            product_price_json_data["payload"]["Offers"])
+        if "payload" in product_price_json_data\
+                and product_price_json_data["payload"] \
+                and "Offers" in product_price_json_data["payload"] \
+                and product_price_json_data["payload"]:
+            leads_data["number_of_sellers_on_listing"] = len(
+                product_price_json_data["payload"]["Offers"])
 
         return JsonResponse(leads_data, status=status.HTTP_200_OK, safe=False)
 
