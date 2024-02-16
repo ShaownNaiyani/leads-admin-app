@@ -10,6 +10,7 @@ from .serializers import LeadsSerializer
 from django.conf import settings
 from django.http import JsonResponse
 from requests_aws4auth import AWS4Auth
+import concurrent.futures
 import boto3
 import requests
 import json
@@ -239,7 +240,17 @@ class GetDataFromSpApi(APIView):
             return Response({'error': 'Both "asin" and "marketplaceId" are required in the query parameters'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        catalog_json_data = self.fetchCatalogItemApiData(asin, marketplace_id)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_catalog = executor.submit(
+                self.fetchCatalogItemApiData, asin, marketplace_id)
+            # future_fba = executor.submit(fetch_fba_data)
+            future_price = executor.submit(
+                self.fetchProductPriceData, asin, marketplace_id)
+
+        # print(future_catalog)
+        # print(future_price)
+        catalog_json_data = future_catalog.result()
+        product_price_json_data = future_price.result()
 
         if "asin" in catalog_json_data:
             leads_data["asin"] = catalog_json_data["asin"]
@@ -248,7 +259,7 @@ class GetDataFromSpApi(APIView):
                 and "item_name" in catalog_json_data["attributes"] \
                 and catalog_json_data["attributes"]["item_name"] \
                 and len(catalog_json_data["attributes"]["item_name"]) > 0 \
-                and "values" in catalog_json_data["attributes"]["item_name"][0]:
+                and "value" in catalog_json_data["attributes"]["item_name"][0]:
             leads_data["product_name"] = catalog_json_data["attributes"]["item_name"][0]["value"]
         if "images" in catalog_json_data \
                 and catalog_json_data["images"] \
@@ -283,8 +294,7 @@ class GetDataFromSpApi(APIView):
                     and "Amount" in amazon_fba_json_data["payload"]["FeesEstimateResult"]["FeesEstimate"]["TotalFeesEstimate"]:
                 leads_data["amazon_fba_estimated_fees"] = amazon_fba_json_data["payload"][
                     "FeesEstimateResult"]["FeesEstimate"]["TotalFeesEstimate"]["Amount"]
-        product_price_json_data = self.fetchProductPriceData(
-            asin, marketplace_id)
+
         if "payload" in product_price_json_data\
                 and product_price_json_data["payload"] \
                 and "Offers" in product_price_json_data["payload"] \

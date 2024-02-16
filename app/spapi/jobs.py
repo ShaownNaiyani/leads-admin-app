@@ -21,4 +21,4 @@ class SpApiDataFetchSchedule:
 
     def start_scheduler(self, request, *args, **kwargs):
         self.scheduler.add_job(self.job_function, 'interval', seconds=10)
-        self.scheduler.start()
+        # self.scheduler.start()
