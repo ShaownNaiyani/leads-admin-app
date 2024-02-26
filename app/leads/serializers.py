@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from spapi.models import LeadsData
+from .models import Electronics, Books, HomeAndKitchen, HealthAndBeauty, SoftwareAndMobileApps, ClothingAndAccessories, ToolsAndHome, SportsAndOutdoors, MoviesAndTv, ToyAndGames, GroceryAndGourMetFood, OfficeProducts, PetSupplies, AutoMotiveAndIndustrial
 
 
 class LeadsManualDataSerializer(serializers.ModelSerializer):
@@ -7,6 +8,89 @@ class LeadsManualDataSerializer(serializers.ModelSerializer):
         model = LeadsData
         fields = '__all__'
 
+
+class ElectronicsLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Electronics
+        fields = '__all__'
+
+
+class BooksLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Books
+        fields = '__all__'
+
+
+class HomeAndKitchenLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeAndKitchen
+        fields = '__all__'
+
+
+class HealthAndBeautyLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HealthAndBeauty
+        fields = '__all__'
+
+
+class SoftwareAndMobileAppsLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SoftwareAndMobileApps
+        fields = '__all__'
+
+
+class ClothingAndAccessoriesLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClothingAndAccessories
+        fields = '__all__'
+
+
+class ToolsAndHomeLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ToolsAndHome
+        fields = '__all__'
+
+
+class SportsAndOutdoorsLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SportsAndOutdoors
+        fields = '__all__'
+
+
+class MoviesAndTvLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MoviesAndTv
+        fields = '__all__'
+
+
+class ToyAndGamesLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ToyAndGames
+        fields = '__all__'
+
+
+class GroceryAndGourMetFoodLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GroceryAndGourMetFood
+        fields = '__all__'
+
+
+class OfficeProductsLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OfficeProducts
+        fields = '__all__'
+
+
+class PetSuppliesLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PetSupplies
+        fields = '__all__'
+
+
+class AutoMotiveAndIndustrialLeadsDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AutoMotiveAndIndustrial
+        fields = '__all__'
     # def get_fields(self):
     #     fields = super().get_fields()
 

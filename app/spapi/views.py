@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.core.cache import cache
 from .models import LeadsData
 from .serializers import LeadsSerializer
 from django.conf import settings
@@ -109,30 +110,38 @@ class TokenManager:
 
 class GetDataFromSpApi(APIView):
     def __init__(self):
-        self.tokens_manager = TokenManager()
-        self.tokens_manager.generateNewLwaToken()
-        self.tokens_manager.generateNewStsKeysAndToken()
+        # self.tokens_manager = TokenManager()
+        # self.tokens_manager.generateNewLwaToken()
+        # self.tokens_manager.generateNewStsKeysAndToken()
         self.LISTPRICENOTFOUND = -1
 
     def fetchCatalogItemApiData(self, asin, marketplace_id):
-        path = f"/catalog/2022-04-01/items/{asin}?marketplaceIds={marketplace_id}&includedData=attributes,identifiers,images,productTypes,salesRanks,summaries"
+        path = f"/catalog/2022-04-01/items/{asin}?marketplaceIds={marketplace_id}&includedData=attributes,images,salesRanks"
         method = 'GET'
         host = 'sellingpartnerapi-na.amazon.com'
         region = 'us-east-1'
 
+        # auth = AWS4Auth(
+        #     self.tokens_manager.access_key_id,
+        #     self.tokens_manager.secret_access_key,
+        #     region,
+        #     method,
+        #     'execute-api',
+        #     session_token=self.tokens_manager.session_token
+        # )
         auth = AWS4Auth(
-            self.tokens_manager.access_key_id,
-            self.tokens_manager.secret_access_key,
+            cache.get('access_key_id'),
+            cache.get('secret_access_key'),
             region,
             method,
             'execute-api',
-            session_token=self.tokens_manager.session_token
+            session_token=cache.get('session_token')
         )
 
         url = f"https://{host}{path}"
 
         response = requests.get(url, auth=auth, headers={
-                                'x-amz-access-token': self.tokens_manager.access_token})
+                                'x-amz-access-token': cache.get('access_token')})
         if (response.ok):
             return response.json()
         return False
@@ -168,7 +177,7 @@ class GetDataFromSpApi(APIView):
             'User-Agent': 'MyAmazonApp/1.0 (Language=JavaScript;)',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'x-amz-access-token': self.tokens_manager.access_token,
+            'x-amz-access-token': cache.get('access_token'),
         }
 
         path = f"/products/fees/v0/items/{asin}/feesEstimate"
@@ -177,12 +186,12 @@ class GetDataFromSpApi(APIView):
         region = 'us-east-1'
 
         auth = AWS4Auth(
-            self.tokens_manager.access_key_id,
-            self.tokens_manager.secret_access_key,
+            cache.get('access_key_id'),
+            cache.get('secret_access_key'),
             region,
             method,
             'execute-api',
-            session_token=self.tokens_manager.session_token
+            session_token=cache.get('session_token')
         )
         url = f"https://{host}{path}"
 
@@ -202,18 +211,18 @@ class GetDataFromSpApi(APIView):
         region = 'us-east-1'
 
         auth = AWS4Auth(
-            self.tokens_manager.access_key_id,
-            self.tokens_manager.secret_access_key,
+            cache.get('access_key_id'),
+            cache.get('secret_access_key'),
             region,
             method,
             'execute-api',
-            session_token=self.tokens_manager.session_token
+           session_token=cache.get('session_token')
         )
 
         url = f"https://{host}{path}"
 
         response = requests.get(url, auth=auth, headers={
-                                'x-amz-access-token': self.tokens_manager.access_token})
+                                'x-amz-access-token': cache.get('access_token')})
 
         if response.status_code == 200:
             return response.json()

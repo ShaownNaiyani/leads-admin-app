@@ -5,7 +5,11 @@ from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from spapi.models import LeadsData
-from .serializers import LeadsManualDataSerializer
+from .models import Electronics, Books, HomeAndKitchen, HealthAndBeauty, SoftwareAndMobileApps, ClothingAndAccessories, ToolsAndHome, SportsAndOutdoors, MoviesAndTv, ToyAndGames, GroceryAndGourMetFood, OfficeProducts, PetSupplies, AutoMotiveAndIndustrial
+
+from .serializers import LeadsManualDataSerializer, ElectronicsLeadsDataSerializer, BooksLeadsDataSerializer, HomeAndKitchenLeadsDataSerializer, HealthAndBeautyLeadsDataSerializer, SoftwareAndMobileAppsLeadsDataSerializer, ClothingAndAccessoriesLeadsDataSerializer, ToolsAndHomeLeadsDataSerializer, SportsAndOutdoorsLeadsDataSerializer, MoviesAndTvLeadsDataSerializer, ToyAndGamesLeadsDataSerializer, GroceryAndGourMetFoodLeadsDataSerializer, OfficeProductsLeadsDataSerializer, PetSuppliesLeadsDataSerializer, AutoMotiveAndIndustrialLeadsDataSerializer
+
+from rest_framework.pagination import LimitOffsetPagination
 import csv
 import requests
 
@@ -13,6 +17,7 @@ import requests
 class LeadsManualDataViewSet(viewsets.ModelViewSet):
     queryset = LeadsData.objects.all()
     serializer_class = LeadsManualDataSerializer
+    pagination_class = LimitOffsetPagination
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -41,20 +46,13 @@ class UploadFilesOfLeadList(APIView):
     queryset = LeadsData.objects.all()
 
     def patch(self, request, *args, **kwargs):
-        # Printing specific attributes of the request
-        # print("Method:", request.method)
-        # print("Path:", request.path)
-        # print("GET parameters:", request.GET)
-        # print("POST parameters:", request.POST)
-        # print("Headers:", request.headers)
-       # print("User:", request.user)  # If authenticated
         file = request.FILES.get('lead.csv')
 
         if not file:
             return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not file.name.endswith('.csv'):
-            return Response({'error': 'File is not a CSV'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Please insert a CSV type file'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             decoded_file = file.read().decode('utf-8').splitlines()
