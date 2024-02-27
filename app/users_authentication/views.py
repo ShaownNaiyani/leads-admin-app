@@ -26,10 +26,7 @@ class UserRegistrationApiView(GenericAPIView):
             send_email_with_otp_to_user(email=user["email"], request=request)
             return Response({
                     "data": user,
-                    "message": f"Hi {user["first_name"]}! 
-                        Thanks for signing up! 
-                        You will shortly get an email with OTP. 
-                        Please check  your email account varification."
+                    "message": f"Hi {user['first_name']}! Thanks for signing up! You will shortly get an email with OTP. Please check  your email account varification."
                 }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

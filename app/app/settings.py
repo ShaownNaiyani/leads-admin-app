@@ -14,14 +14,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-!os&h2-zafylrqes$g9=spk^z@$nt7$shx39+zp7!j)xp$%7j)'
 
 # SP api authetication keys
-LWA_AUTHENTICATION = {
-    'LWA_APP_ID': os.environ.get('LWA_APP_ID'),
-    'LWA_CLIENT_SECRET': os.environ.get('LWA_CLIENT_SECRET'),
-    'AWS_SECRET_ACCESS_KEY': os.environ.get('AWS_SECRET_ACCESS_KEY'),
-    'AWS_ACCESS_KEY_ID': os.environ.get('AWS_ACCESS_KEY_ID'),
-    'ROLE_ARN': os.environ.get('ROLE_ARN'),
-    'REFRESH_TOKEN': os.environ.get('REFRESH_TOKEN'),
-}
+# LWA_AUTHENTICATION = {
+#     'LWA_APP_ID': os.environ.get('LWA_APP_ID'),
+#     'LWA_CLIENT_SECRET': os.environ.get('LWA_CLIENT_SECRET'),
+#     'AWS_SECRET_ACCESS_KEY': os.environ.get('AWS_SECRET_ACCESS_KEY'),
+#     'AWS_ACCESS_KEY_ID': os.environ.get('AWS_ACCESS_KEY_ID'),
+#     'ROLE_ARN': os.environ.get('ROLE_ARN'),
+#     'REFRESH_TOKEN': os.environ.get('REFRESH_TOKEN'),
+# }
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'core',
     'spapi',
     'leads',
+    'users_authentication',
 ]
 
 MIDDLEWARE = [
@@ -100,10 +101,6 @@ DATABASES = {
 }
 
 
-# custom auth_user_model 
-AUTH_USER_MODEL = "users_authentication.User" 
-
-
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -147,7 +144,9 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'core.User'
+# AUTH_USER_MODEL = 'core.User'
+# custom auth_user_model 
+AUTH_USER_MODEL = "users_authentication.User" 
 
 # Email clent setting for sending email to the user 
 # Email client settings 
