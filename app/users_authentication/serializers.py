@@ -1,5 +1,7 @@
-from .models import User
+from django.contrib.auth import authenticate 
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
+from .models import User
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -28,4 +30,39 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         )
         
         return user
+
+
+class UserLoginSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(min_length=10, max_length=255)
+    password = serializers.CharField(min_length=8, max_length=64, write_only=True)
+    full_name = serializers.CharField(max_length=255, read_only=True)
+    access_token = serializers.CharField(max_length=255, read_only=True)
+    refresh_token = serializers.CharField(max_length=255, read_only=True)
+    
+    class Meta:
+        model = User 
+        fields = ["email", "password", "full_name", "access_token", "refresh_token"] 
+        
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+        request = self.context.get("request")
+        
+        user = authenticate(request=request, email=email, password=password)
+        
+        if user is None:
+            raise AuthenticationFailed("Unauthorized attempt!")
+
+        if not user.is_verified:
+            raise AuthenticationFailed("Please verify your account with OTP!")
+        
+        # programm reach this line means there is a verified user with this email
+        user_token = user.get_token
+        
+        return {
+            "email": email,
+            "full_name": user.get_full_name,
+            "access_token": user_token.get("access"),
+            "refresh_token": user_token.get("refresh")
+        }
     
