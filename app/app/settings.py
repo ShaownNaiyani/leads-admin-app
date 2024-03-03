@@ -121,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CACHE_TTL = 60 * 1500 # cache data existing time
+CACHE_TTL = 60 * 1500  # cache data existing time
 
 CACHES = {
     "default": {
@@ -136,7 +136,8 @@ CACHES = {
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 5
+    'PAGE_SIZE': 5,
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
 }
 
 # Internationalization
