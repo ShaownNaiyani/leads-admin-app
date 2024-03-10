@@ -253,13 +253,13 @@ class GetDataFromSpApi(APIView):
             future_catalog = executor.submit(
                 self.fetchCatalogItemApiData, asin, marketplace_id)
             # future_fba = executor.submit(fetch_fba_data)
-            future_price = executor.submit(
-                self.fetchProductPriceData, asin, marketplace_id)
+            # future_price = executor.submit(
+            #     self.fetchProductPriceData, asin, marketplace_id)
 
         # print(future_catalog)
         # print(future_price)
         catalog_json_data = future_catalog.result()
-        product_price_json_data = future_price.result()
+        # product_price_json_data = future_price.result()
 
         if "asin" in catalog_json_data:
             leads_data["asin"] = catalog_json_data["asin"]
@@ -304,17 +304,86 @@ class GetDataFromSpApi(APIView):
                 leads_data["amazon_fba_estimated_fees"] = amazon_fba_json_data["payload"][
                     "FeesEstimateResult"]["FeesEstimate"]["TotalFeesEstimate"]["Amount"]
 
-        if "payload" in product_price_json_data\
-                and product_price_json_data["payload"] \
-                and "Offers" in product_price_json_data["payload"] \
-                and product_price_json_data["payload"]:
-            leads_data["number_of_sellers_on_listing"] = len(
-                product_price_json_data["payload"]["Offers"])
-
-        return JsonResponse(leads_data, status=status.HTTP_200_OK, safe=False)
+        # if "payload" in product_price_json_data\
+        #         and product_price_json_data["payload"] \
+        #         and "Offers" in product_price_json_data["payload"] \
+        #         and product_price_json_data["payload"]:
+        #     leads_data["number_of_sellers_on_listing"] = len(
+        #         product_price_json_data["payload"]["Offers"])
+        # return leads_data;
+        return JsonResponse(data=leads_data, status=status.HTTP_200_OK, safe=False)
 
         # if response.ok:
         #     json_data = response.json()
         #     return JsonResponse(leads_data, status=status.HTTP_200_OK, safe=False)
         # else:
         #     return Response({'error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ConcurrentAPICallView(APIView):
+    def get_data(self, asin):
+        url = f'http://localhost:8000/spapi/api/get_sp_api_data?asin={asin}&marketplaceId=A2EUQ1WTGCTBG2'
+        response = requests.get(url)
+        return response
+
+    def get(self, request):
+        asins = ['B07BF2CD75', 'B08H1LBQMZ', 'B01N0O7QKJ', 'B00006IFMO', 'B007RAQTSI', 'B07PZGSWN9', 'B07XLDRB2S', 'B0025TUZ8Q', 'B08YPCDG29', 'B004QJU51K']  # Replace with your list of ASINs
+        ans = [];
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Concurrently fetch data for all ASINs
+            future_to_asin = {executor.submit(self.get_data, asin): asin for asin in asins}
+            asin_data = []
+
+            for future in concurrent.futures.as_completed(future_to_asin):
+                asin = future_to_asin[future]
+                try:
+                    data = future.result()
+                except Exception as exc:
+                    print(f'Fetching data for {asin} generated an exception: {exc}')
+                else:
+                    asin_data.append(data.json())
+
+        # Now you have an array of dictionaries, each containing ASIN and its associated data
+        for item in asin_data:
+            print(item)
+
+        # return Response('successful')
+        return JsonResponse(data=asin_data, status=status.HTTP_200_OK, safe=False)
+            # Concurrently fetch data for all ASINs
+            # asin1 = executor.submit(self.get_data, 'B07BF2CD75')
+            # asin2 = executor.submit(self.get_data, 'B08H1LBQMZ')
+            # asin3 = executor.submit(self.get_data, 'B01N0O7QKJ')
+            # asin4 = executor.submit(self.get_data, 'B00006IFMO')
+            # asin5 = executor.submit(self.get_data, 'B007RAQTSI')
+            # asin6 = executor.submit(self.get_data, 'B07PZGSWN9')
+            # asin7 = executor.submit(self.get_data, 'B07XLDRB2S')
+            # asin8 = executor.submit(self.get_data, 'B0025TUZ8Q')
+            # asin9 = executor.submit(self.get_data, 'B08YPCDG29')
+            # asin10 = executor.submit(self.get_data, 'B004QJU51K')
+
+            # Retrieve the responses
+            # response1 = asin1.result()
+            # response2 = asin2.result()
+            # response3 = asin3.result()
+            # response4 = asin4.result()
+            # response5 = asin5.result()
+            # response6 = asin6.result()
+            # response7 = asin7.result()
+            # response8 = asin8.result()
+            # response9 = asin9.result()
+            # response10 = asin10.result()
+
+        # Now you can use response1 and response2 as needed
+        # print(response1)
+        # print(response2)
+        # print(response3)
+        # print(response4)
+        # print(response5)
+        # print(response6)
+        # print(response7)
+        # print(response8)
+        # print(response9)
+        # print(response10)
+
+
+        # return Response('successful')
