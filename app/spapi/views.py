@@ -325,9 +325,57 @@ class ConcurrentAPICallView(APIView):
         response = requests.get(url)
         return response
 
+    def fetchProductPriceBatchData(self, asins, marketplace_id):
+        requested_asins_array = []
+        for asin in asins:
+            single_asin_payload = {
+                "uri": f"/products/pricing/v0/items/{asin}/offers",
+                "method": "GET",
+                "ItemCondition": "New",
+                "MarketplaceId": marketplace_id,
+                "CustomerType": "Consumer"
+            }
+            requested_asins_array.append(single_asin_payload)
+
+        payload = {
+            "requests": requested_asins_array
+        }
+        path = f"/batches/products/pricing/v0/itemOffers"
+        method = 'POST'
+        host = 'sellingpartnerapi-na.amazon.com'
+        region = 'us-east-1'
+
+        auth = AWS4Auth(
+            cache.get('access_key_id'),
+            cache.get('secret_access_key'),
+            region,
+            method,
+            'execute-api',
+           session_token=cache.get('session_token')
+        )
+
+        url = f"https://{host}{path}"
+        headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'x-amz-access-token': cache.get('access_token'),
+        }
+        body = json.dumps(payload)
+        print(body)
+        response = requests.post(url, auth=auth, headers=headers, data=body);
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(
+                f"Request failed with status code {response.status_code}")
+
     def get(self, request):
-        asins = ['B07BF2CD75', 'B08H1LBQMZ', 'B01N0O7QKJ', 'B00006IFMO', 'B007RAQTSI', 'B07PZGSWN9', 'B07XLDRB2S', 'B0025TUZ8Q', 'B08YPCDG29', 'B004QJU51K']  # Replace with your list of ASINs
-        ans = [];
+        requested_asins = request.data;
+        print(requested_asins["asins"])
+        # asins = ['B07BF2CD75', 'B08H1LBQMZ', 'B01N0O7QKJ', 'B00006IFMO', 'B007RAQTSI', 'B07PZGSWN9', 'B07XLDRB2S', 'B0025TUZ8Q', 'B08YPCDG29', 'B004QJU51K']  # Replace with your list of ASINs
+        asins = requested_asins["asins"]
+
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             # Concurrently fetch data for all ASINs
@@ -343,47 +391,10 @@ class ConcurrentAPICallView(APIView):
                 else:
                     asin_data.append(data.json())
 
-        # Now you have an array of dictionaries, each containing ASIN and its associated data
         for item in asin_data:
             print(item)
 
-        # return Response('successful')
-        return JsonResponse(data=asin_data, status=status.HTTP_200_OK, safe=False)
-            # Concurrently fetch data for all ASINs
-            # asin1 = executor.submit(self.get_data, 'B07BF2CD75')
-            # asin2 = executor.submit(self.get_data, 'B08H1LBQMZ')
-            # asin3 = executor.submit(self.get_data, 'B01N0O7QKJ')
-            # asin4 = executor.submit(self.get_data, 'B00006IFMO')
-            # asin5 = executor.submit(self.get_data, 'B007RAQTSI')
-            # asin6 = executor.submit(self.get_data, 'B07PZGSWN9')
-            # asin7 = executor.submit(self.get_data, 'B07XLDRB2S')
-            # asin8 = executor.submit(self.get_data, 'B0025TUZ8Q')
-            # asin9 = executor.submit(self.get_data, 'B08YPCDG29')
-            # asin10 = executor.submit(self.get_data, 'B004QJU51K')
+        response = self.fetchProductPriceBatchData(asins, "A2EUQ1WTGCTBG2")
+        print(response);
 
-            # Retrieve the responses
-            # response1 = asin1.result()
-            # response2 = asin2.result()
-            # response3 = asin3.result()
-            # response4 = asin4.result()
-            # response5 = asin5.result()
-            # response6 = asin6.result()
-            # response7 = asin7.result()
-            # response8 = asin8.result()
-            # response9 = asin9.result()
-            # response10 = asin10.result()
-
-        # Now you can use response1 and response2 as needed
-        # print(response1)
-        # print(response2)
-        # print(response3)
-        # print(response4)
-        # print(response5)
-        # print(response6)
-        # print(response7)
-        # print(response8)
-        # print(response9)
-        # print(response10)
-
-
-        # return Response('successful')
+        return JsonResponse(data=response, status=status.HTTP_200_OK, safe=False)
