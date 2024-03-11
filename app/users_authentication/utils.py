@@ -8,6 +8,7 @@ from .models import (
     OneTimePassword, 
 )
 
+from_email = "shamim@naiyani.com"
 
 
 def send_email_with_otp_to_user(email, request):
@@ -18,8 +19,7 @@ def send_email_with_otp_to_user(email, request):
     current_site = get_current_site(request=request)
     
     # send email
-    # from_email = settings.DEFAULT_FROM_EMAIL
-    from_email = "shamim@naiyani.com" 
+    # from_email = settings.DEFAULT_FROM_EMAIL 
     subject = "Important: Account Verification!"
     body = f"Hi {user.first_name}! Welcome to {current_site}! Please verify your account with the\n one time passcode(OTP).\nYour OTP is {otp}"
     email_message = EmailMessage(
@@ -34,4 +34,31 @@ def send_email_with_otp_to_user(email, request):
     # save the otp token in the database for further varification 
     OneTimePassword.objects.create(user=user, code=otp)
     
+   
+def send_password_reset_link_to_email(data):
+    '''
+            email_data = {
+                'to': user.email,
+                'subject': f"Password reset link from {current_site_domain}!",
+                'body': email_body
+            }
+    '''
+    email = EmailMessage(
+        subject=data["subject"],      
+        from_email=from_email,  
+        body=data["body"],
+        to=[data["to"]] 
+    ) 
     
+    email.send(fail_silently=True)
+
+
+def send_new_password_to_email(data):
+    email = EmailMessage(
+        to=[data["to"]], 
+        from_email=from_email,
+        subject=data["subject"],
+        body=data["body"] 
+    )
+    
+    email.send(fail_silently=True)
