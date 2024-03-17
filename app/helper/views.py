@@ -30,3 +30,4 @@ class helperGlobalFunction:
     def getCategoryWiseTable(self, category_id):
         if (category_id in self.category_mapping):
             return self.category_mapping[category_id]
+

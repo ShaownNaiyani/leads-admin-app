@@ -60,6 +60,6 @@ class SpApiDataFetchSchedule:
 
     def start_scheduler(self, request, *args, **kwargs):
         self.scheduler.add_job(
-            self.getAutheticationTokenForSp, 'interval', seconds=10)
+            self.getAutheticationTokenForSp, 'interval', minutes=5)
         # self.scheduler.add_job(self.sp_api_call, 'interval', seconds=10)
-        # self.scheduler.start()
+        self.scheduler.start()
