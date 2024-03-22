@@ -76,84 +76,113 @@ class Books(LeadsDataAbstractModelFields):
 
 
 class HomeAndKitchen(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_home_and_kitchen'
+    history = HistoricalRecords(table_name='history_leads_home_and_kitchen')
 
     def __str__(self):
         return self.asin
 
 
 class HealthAndBeauty(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_health_and_beauty'
+    history = HistoricalRecords(table_name='history_leads_health_and_beauty')
 
     def __str__(self):
         return self.asin
 
 
 class SoftwareAndMobileApps(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_software_and_mobile_apps'
+    history = HistoricalRecords(
+        table_name='history_leads_software_and_mobile_apps')
 
     def __str__(self):
         return self.asin
 
 
 class ClothingAndAccessories(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_clothing_and_accessories'
+    history = HistoricalRecords(
+        table_name='history_leads_clothing_and_accessories')
 
     def __str__(self):
         return self.asin
 
 
 class ToolsAndHome(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_tools_and_home'
+    history = HistoricalRecords(table_name='history_leads_tools_and_home')
 
     def __str__(self):
         return self.asin
 
 
 class SportsAndOutdoors(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_sports_and_outdoors'
+    history = HistoricalRecords(table_name='history_leads_sports_and_outdoors')
 
     def __str__(self):
         return self.asin
 
 
 class MoviesAndTv(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_movies_and_tv'
+    history = HistoricalRecords(table_name='history_leads_movies_and_tv')
 
     def __str__(self):
         return self.asin
 
 
 class ToyAndGames(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_toy_and_games'
+    history = HistoricalRecords(table_name='history_leads_toy_and_games')
 
     def __str__(self):
         return self.asin
 
 
 class GroceryAndGourMetFood(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_grocery_and_gourmet_food'
+    history = HistoricalRecords(
+        table_name='history_leads_grocery_and_gourmet_food')
 
     def __str__(self):
         return self.asin
 
 
 class OfficeProducts(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_office_product'
+    history = HistoricalRecords(table_name='history_leads_office_product')
 
     def __str__(self):
         return self.asin
 
 
 class PetSupplies(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_pets_supplies'
+    history = HistoricalRecords(table_name='history_leads_pets_supplies')
 
     def __str__(self):
         return self.asin
 
 
 class AutoMotiveAndIndustrial(LeadsDataAbstractModelFields):
-    history = HistoricalRecords()
+    class Meta:
+        db_table = 'leads_automotive_and_industrial'
+
+    history = HistoricalRecords(
+        table_name='history_leads_automotive_and_industrial')
 
     def __str__(self):
         return self.asin
