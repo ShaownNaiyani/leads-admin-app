@@ -384,7 +384,6 @@ class ConcurrentAPICallView(GetDataFromSpApi):
         response = requests.post(url, auth=auth, headers=headers, data=body)
 
         if response.status_code == 200:
-            print(response.json());
             return response.json()
         else:
             raise Exception(
@@ -496,19 +495,25 @@ class ConcurrentAPICallView(GetDataFromSpApi):
 
             final_lead_list_response_data.append(leads_data_payload);
 
-        self.fetchAmazonFbaFees(leads_list=final_lead_list_response_data, marketplace_id=marketplace_id);
+        fba_fees_response_data = self.fetchAmazonFbaFees(leads_list=final_lead_list_response_data, marketplace_id=marketplace_id);
+        formated_fba_fees_data={};
+        if len(fba_fees_response_data) > 0:
+            for item in fba_fees_response_data:
+                if "FeesEstimateIdentifier" in item\
+                    and "IdValue" in item["FeesEstimateIdentifier"]\
+                    and "FeesEstimate" in item\
+                    and "TotalFeesEstimate" in item["FeesEstimate"]\
+                    and "Amount" in item["FeesEstimate"]["TotalFeesEstimate"]:
 
-            # list_price = leads_data["amazon_price"];
-            # if list_price is not None:
-            #     amazon_fba_json_data = self.fetchAmazonFbaFees(
-            #         asin, list_price, marketplace_id)
-            #     if "payload" in amazon_fba_json_data \
-            #             and "FeesEstimateResult" in amazon_fba_json_data["payload"] \
-            #             and "FeesEstimate" in amazon_fba_json_data["payload"]["FeesEstimateResult"] \
-            #             and "TotalFeesEstimate" in amazon_fba_json_data["payload"]["FeesEstimateResult"]["FeesEstimate"] \
-            #             and "Amount" in amazon_fba_json_data["payload"]["FeesEstimateResult"]["FeesEstimate"]["TotalFeesEstimate"]:
-            #         leads_data["amazon_fba_estimated_fees"] = amazon_fba_json_data["payload"][
-            #             "FeesEstimateResult"]["FeesEstimate"]["TotalFeesEstimate"]["Amount"]
+                    response_asin = item["FeesEstimateIdentifier"]["IdValue"]
+                    estimated_amount = item["FeesEstimate"]["TotalFeesEstimate"]
+                    formated_fba_fees_data[response_asin] = {"estimated_fba_fees": estimated_amount}
+
+            for asin_data in  final_lead_list_response_data:
+                if asin_data["asin"] in formated_fba_fees_data:
+                    asin_data["amazon_fba_estimated_fees"] = formated_fba_fees_data[asin_data["asin"]]["estimated_fba_fees"]
+                else:
+                    asin_data["amazon_fba_estimated_fees"] = 'N/A'
 
         if "responses" in product_price_response_data\
             and len(product_price_response_data["responses"])>0:
