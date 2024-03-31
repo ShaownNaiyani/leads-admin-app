@@ -298,9 +298,9 @@ class GetDataFromSpApi(APIView):
         return leads_data;
 
 class ConcurrentAPICallView(GetDataFromSpApi):
-    def get_data(self, asin, marketplace_id):
-        getCatalogAndFbaFessData = self.getData(asin, marketplace_id)
-        return getCatalogAndFbaFessData
+    # def get_data(self, asin, marketplace_id):
+    #     getCatalogAndFbaFessData = self.getData(asin, marketplace_id)
+    #     return getCatalogAndFbaFessData
 
     def fetchCatalogItemApiBulkData(self, asins, marketplace_id):
         formatedAsins = ',' . join(asins);
@@ -325,7 +325,7 @@ class ConcurrentAPICallView(GetDataFromSpApi):
             return response.json()
         return False
 
-    def fetchAmazonFbaFees(self, leads_list, marketplace_id):
+    def fetchAmazonFbaFeesBulkData(self, leads_list, marketplace_id):
         fbaRequestedAsinspayload = [];
 
         for lead in leads_list:
@@ -389,7 +389,7 @@ class ConcurrentAPICallView(GetDataFromSpApi):
             raise Exception(
                 f"Request failed with status code {response.status_code}")
 
-    def fetchProductPriceBatchData(self, asins, marketplace_id):
+    def fetchProductPriceBulkData(self, asins, marketplace_id):
         requested_asins_array = []
         for asin in asins:
             single_asin_payload = {
@@ -434,104 +434,109 @@ class ConcurrentAPICallView(GetDataFromSpApi):
                 f"Request failed with status code {response.status_code}")
 
     def get(self, request):
-        requested_asins = request.data
-        asins = requested_asins["asins"]
-        marketplace_id = requested_asins["marketplace_id"]
+        try:
+            requested_asins = request.data
+            asins = requested_asins["asins"]
+            marketplace_id = requested_asins["marketplace_id"]
 
 
-        final_lead_list_response_data = [];
+            final_lead_list_response_data = [];
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            fetch_batch_catalog_items_data = executor.submit(self.fetchCatalogItemApiBulkData, asins,marketplace_id)
-            fetch_batch_product_price_data = executor.submit(self.fetchProductPriceBatchData, asins, marketplace_id)
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                fetch_batch_catalog_items_data = executor.submit(self.fetchCatalogItemApiBulkData, asins,marketplace_id)
+                fetch_batch_product_price_data = executor.submit(self.fetchProductPriceBulkData, asins, marketplace_id)
 
 
-        catalog_items_response_data = fetch_batch_catalog_items_data.result()
-        product_price_response_data = fetch_batch_product_price_data.result()
-        formated_product_data= {};
+            catalog_items_response_data = fetch_batch_catalog_items_data.result()
+            product_price_response_data = fetch_batch_product_price_data.result()
+            formated_product_data= {};
 
-        for item in catalog_items_response_data["items"]:
-            leads_data_payload = {
-                "asin": None,
-                "product_image_url": None,
-                "product_name": None,
-                "amazon_fba_estimated_fees": None,
-                "estimated_sales_rank": None,
-                "amazon_price": None,
-                "number_of_sellers_on_listing": None,
-            }
+            for item in catalog_items_response_data["items"]:
+                leads_data_payload = {
+                    "asin": None,
+                    "product_image_url": None,
+                    "product_name": None,
+                    "amazon_fba_estimated_fees": None,
+                    "estimated_sales_rank": None,
+                    "amazon_price": None,
+                    "number_of_sellers_on_listing": None,
+                }
 
-            if "asin" in item:
-                leads_data_payload["asin"] = item["asin"]
-            if "attributes" in item \
-                    and item["attributes"] \
-                    and "item_name" in item["attributes"] \
-                    and item["attributes"]["item_name"] \
-                    and len(item["attributes"]["item_name"]) > 0 \
-                    and "value" in item["attributes"]["item_name"][0]:
-                leads_data_payload["product_name"] = item["attributes"]["item_name"][0]["value"]
-            if "images" in item \
-                    and item["images"] \
-                    and len(item["images"]) > 0 \
-                    and "images" in item["images"][0] \
-                    and item["images"][0]["images"] \
-                    and len(item["images"][0]["images"]) > 0 \
-                    and "link" in item["images"][0]["images"][0]:
-                leads_data_payload["product_image_url"] = item["images"][0]["images"][0]["link"]
+                if "asin" in item:
+                    leads_data_payload["asin"] = item["asin"]
+                if "attributes" in item \
+                        and item["attributes"] \
+                        and "item_name" in item["attributes"] \
+                        and item["attributes"]["item_name"] \
+                        and len(item["attributes"]["item_name"]) > 0 \
+                        and "value" in item["attributes"]["item_name"][0]:
+                    leads_data_payload["product_name"] = item["attributes"]["item_name"][0]["value"]
+                if "images" in item \
+                        and item["images"] \
+                        and len(item["images"]) > 0 \
+                        and "images" in item["images"][0] \
+                        and item["images"][0]["images"] \
+                        and len(item["images"][0]["images"]) > 0 \
+                        and "link" in item["images"][0]["images"][0]:
+                    leads_data_payload["product_image_url"] = item["images"][0]["images"][0]["link"]
 
-            if "salesRanks" in item \
-                    and item["salesRanks"] \
-                    and "displayGroupRanks" in item["salesRanks"][0] \
-                    and item["salesRanks"][0]["displayGroupRanks"] \
-                    and item["salesRanks"][0]["displayGroupRanks"][0] \
-                    and "rank" in item["salesRanks"][0]["displayGroupRanks"][0]:
-                leads_data_payload["estimated_sales_rank"] = item["salesRanks"][0]["displayGroupRanks"][0]["rank"]
+                if "salesRanks" in item \
+                        and item["salesRanks"] \
+                        and "displayGroupRanks" in item["salesRanks"][0] \
+                        and item["salesRanks"][0]["displayGroupRanks"] \
+                        and item["salesRanks"][0]["displayGroupRanks"][0] \
+                        and "rank" in item["salesRanks"][0]["displayGroupRanks"][0]:
+                    leads_data_payload["estimated_sales_rank"] = item["salesRanks"][0]["displayGroupRanks"][0]["rank"]
 
-            if "attributes" in item and item["attributes"]:
-                list_price_data = item["attributes"].get("list_price")
-                if list_price_data is not None and list_price_data:
-                    list_price_value = list_price_data[0]["value"]
-                    leads_data_payload["amazon_price"] = list_price_value
+                if "attributes" in item and item["attributes"]:
+                    list_price_data = item["attributes"].get("list_price")
+                    if list_price_data is not None and list_price_data:
+                        list_price_value = list_price_data[0]["value"]
+                        leads_data_payload["amazon_price"] = list_price_value
 
-            final_lead_list_response_data.append(leads_data_payload);
+                final_lead_list_response_data.append(leads_data_payload);
 
-        fba_fees_response_data = self.fetchAmazonFbaFees(leads_list=final_lead_list_response_data, marketplace_id=marketplace_id);
-        formated_fba_fees_data={};
-        if len(fba_fees_response_data) > 0:
-            for item in fba_fees_response_data:
-                if "FeesEstimateIdentifier" in item\
-                    and "IdValue" in item["FeesEstimateIdentifier"]\
-                    and "FeesEstimate" in item\
-                    and "TotalFeesEstimate" in item["FeesEstimate"]\
-                    and "Amount" in item["FeesEstimate"]["TotalFeesEstimate"]:
+            fba_fees_response_data = self.fetchAmazonFbaFeesBulkData(leads_list=final_lead_list_response_data, marketplace_id=marketplace_id);
+            formated_fba_fees_data={};
+            if len(fba_fees_response_data) > 0:
+                for item in fba_fees_response_data:
+                    if "FeesEstimateIdentifier" in item\
+                        and "IdValue" in item["FeesEstimateIdentifier"]\
+                        and "FeesEstimate" in item\
+                        and "TotalFeesEstimate" in item["FeesEstimate"]\
+                        and "Amount" in item["FeesEstimate"]["TotalFeesEstimate"]:
 
-                    response_asin = item["FeesEstimateIdentifier"]["IdValue"]
-                    estimated_amount = item["FeesEstimate"]["TotalFeesEstimate"]
-                    formated_fba_fees_data[response_asin] = {"estimated_fba_fees": estimated_amount}
+                        response_asin = item["FeesEstimateIdentifier"]["IdValue"]
+                        estimated_amount = item["FeesEstimate"]["TotalFeesEstimate"]
+                        formated_fba_fees_data[response_asin] = {"estimated_fba_fees": estimated_amount}
+
+                for asin_data in  final_lead_list_response_data:
+                    if asin_data["asin"] in formated_fba_fees_data:
+                        asin_data["amazon_fba_estimated_fees"] = formated_fba_fees_data[asin_data["asin"]]["estimated_fba_fees"]
+                    else:
+                        asin_data["amazon_fba_estimated_fees"] = 'N/A'
+
+            if "responses" in product_price_response_data\
+                and len(product_price_response_data["responses"])>0:
+                for product_data in product_price_response_data["responses"]:
+                    if  "body" in product_data\
+                        and "payload" in product_data["body"]\
+                        and "ASIN" in product_data["body"]["payload"]\
+                        and "Summary" in product_data["body"]["payload"]\
+                        and "TotalOfferCount" in product_data["body"]["payload"]["Summary"]:
+
+                        asin = product_data["body"]["payload"]["ASIN"]
+                        numbers_of_sellers_on_listing = product_data["body"]["payload"]["Summary"]["TotalOfferCount"]
+                        formated_product_data[asin] = {"number_of_sellers_on_listing": numbers_of_sellers_on_listing}
 
             for asin_data in  final_lead_list_response_data:
-                if asin_data["asin"] in formated_fba_fees_data:
-                    asin_data["amazon_fba_estimated_fees"] = formated_fba_fees_data[asin_data["asin"]]["estimated_fba_fees"]
+                if(asin_data["asin"] in formated_product_data):
+                    asin_data["number_of_sellers_on_listing"] = formated_product_data[asin_data["asin"]]["number_of_sellers_on_listing"]
                 else:
-                    asin_data["amazon_fba_estimated_fees"] = 'N/A'
+                    asin_data["number_of_sellers_on_listing"] = 'N/A'
 
-        if "responses" in product_price_response_data\
-            and len(product_price_response_data["responses"])>0:
-            for product_data in product_price_response_data["responses"]:
-                if  "body" in product_data\
-                    and "payload" in product_data["body"]\
-                    and "ASIN" in product_data["body"]["payload"]\
-                    and "Summary" in product_data["body"]["payload"]\
-                    and "TotalOfferCount" in product_data["body"]["payload"]["Summary"]:
+            return CommonApiResponse(data=final_lead_list_response_data, message='success', status_code=status.HTTP_200_OK)
 
-                    asin = product_data["body"]["payload"]["ASIN"]
-                    numbers_of_sellers_on_listing = product_data["body"]["payload"]["Summary"]["TotalOfferCount"]
-                    formated_product_data[asin] = {"number_of_sellers_on_listing": numbers_of_sellers_on_listing}
-
-        for asin_data in  final_lead_list_response_data:
-            if(asin_data["asin"] in formated_product_data):
-                asin_data["number_of_sellers_on_listing"] = formated_product_data[asin_data["asin"]]["number_of_sellers_on_listing"]
-            else:
-                asin_data["number_of_sellers_on_listing"] = 'N/A'
-
-        return CommonApiResponse(data=final_lead_list_response_data, message='success', status_code=status.HTTP_200_OK)
+        except Exception as e:
+            print('dfsdf');
+            return CommonApiResponse(message='Something went wrong!', errors= str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

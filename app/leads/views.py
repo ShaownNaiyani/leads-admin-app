@@ -16,7 +16,9 @@ from helper.views import helperGlobalFunction
 from rest_framework.pagination import LimitOffsetPagination
 import csv
 import requests
+import logging
 
+logger = logging.getLogger(__name__)
 
 class LeadsManualDataViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
@@ -92,10 +94,17 @@ class UploadFilesOfLeadList(APIView):
         if not file.name.endswith('.csv'):
             return Response({'error': 'Please insert a CSV type file'}, status=status.HTTP_400_BAD_REQUEST)
 
+        content = file.read(1024).decode('utf-8')
+        delimiter = '\t' if '\t' in content else ','
+        file.seek(0)
+
         try:
             decoded_file = file.read().decode('utf-8').splitlines()
-            reader = csv.DictReader(decoded_file)
+            print(delimiter)
+            reader = csv.DictReader(decoded_file, delimiter=delimiter)
+            # reader = csv.DictReader(decoded_file)
             for row in reader:
+                print(row)
                 currentAsin = row.get('asin')
                 if currentAsin:
                     existing_lead = category_model.objects.filter(
@@ -107,16 +116,19 @@ class UploadFilesOfLeadList(APIView):
                         serializer = serializer_class(data=row)
 
                 else:
+                    # logger.error(serializer.errors)
                     return CommonApiResponse(data={}, message='failed to import csv file!!', status_code=status.HTTP_400_BAD_REQUEST, errors= "Found Null object!!")
 
                 if serializer.is_valid():
                     serializer.save()
                 else:
+                    logger.error(serializer.errors)
                     return CommonApiResponse(data={}, message='failed to import csv file!!', status_code=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
 
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(str(e))
+            return CommonApiResponse(message='failed to import csv file!!', errors = str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return CommonApiResponse(data=reader, message='data imported successfully!!', status_code=status.HTTP_200_OK)
 
