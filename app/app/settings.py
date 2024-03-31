@@ -54,12 +54,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'simple_history',
     'rest_framework',
-    'core',
-    'spapi',
-    'leads',
     'users_authentication',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'spapi',
+    'leads',
 ]
 
 MIDDLEWARE = [
@@ -67,6 +66,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'middleware.custom_authentication_middleware.CustomAuthenticationMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -170,8 +170,8 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # AUTH_USER_MODEL = 'core.User'
-# custom auth_user_model 
-AUTH_USER_MODEL = "users_authentication.User" 
+# custom auth_user_model
+AUTH_USER_MODEL = "users_authentication.User"
 
 # simple jwt config
 REST_FRAMEWORK = {
@@ -191,11 +191,36 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# Email clent setting for sending email to the user 
-# Email client settings 
+# Email clent setting for sending email to the user
+# Email client settings
 EMAIL_HOST=os.environ.get("EMAIL_HOST")
 EMAIL_HOST_USER=os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD=os.environ.get("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL=os.environ.get("DEFAULT_FROM_EMAIL")
 EMAIL_PORT=os.environ.get("EMAIL_PORT")
 EMAIL_USE_TLS=True
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "general.log",
+            "formatter": "standard",
+        },
+    },
+    "loggers": {
+        "": {
+            "handlers": ["console", "file"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "DEBUG"),
+        }
+    },
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s'
+        },
+    },
+}

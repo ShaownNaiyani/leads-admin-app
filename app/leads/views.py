@@ -2,6 +2,7 @@ from asyncio import exceptions
 from django.forms import ValidationError
 from django.http import JsonResponse
 from rest_framework.response import Response
+from helper.utils.commonApiResponse import CommonApiResponse
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework import viewsets
@@ -15,7 +16,9 @@ from helper.views import helperGlobalFunction
 from rest_framework.pagination import LimitOffsetPagination
 import csv
 import requests
+import logging
 
+logger = logging.getLogger(__name__)
 
 class LeadsManualDataViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
@@ -67,44 +70,6 @@ class LeadsManualDataViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# class UploadFilesOfLeadList(APIView):
-#     serializer_class = LeadsManualDataSerializer
-#     queryset = LeadsData.objects.all()
-
-#     def patch(self, request, *args, **kwargs):
-#         file = request.FILES.get('lead.csv')
-
-#         if not file:
-#             return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         if not file.name.endswith('.csv'):
-#             return Response({'error': 'Please insert a CSV type file'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         try:
-#             decoded_file = file.read().decode('utf-8').splitlines()
-#             reader = csv.DictReader(decoded_file)
-#             for row in reader:
-#                 currentAsin = row.get('asin')
-#                 if currentAsin:
-#                     existing_lead = LeadsData.objects.filter(
-#                         asin=currentAsin).first()
-#                     if existing_lead:
-#                         serializer = self.serializer_class(
-#                             existing_lead, data=row, partial=True)
-#                     else:
-#                         serializer = self.serializer_class(data=row)
-#                 else:
-#                     continue
-
-#                 if serializer.is_valid():
-#                     serializer.save()
-#                 else:
-#                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#         except Exception as e:
-#             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#         return Response({'message': 'Data imported successfully'}, status=status.HTTP_200_OK)
-
 class UploadFilesOfLeadList(APIView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -121,6 +86,7 @@ class UploadFilesOfLeadList(APIView):
         category_model = selected_category[0];
 
         file = request.FILES.get('lead.csv')
+        print(file);
 
         if not file:
             return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -128,10 +94,17 @@ class UploadFilesOfLeadList(APIView):
         if not file.name.endswith('.csv'):
             return Response({'error': 'Please insert a CSV type file'}, status=status.HTTP_400_BAD_REQUEST)
 
+        content = file.read(1024).decode('utf-8')
+        delimiter = '\t' if '\t' in content else ','
+        file.seek(0)
+
         try:
             decoded_file = file.read().decode('utf-8').splitlines()
-            reader = csv.DictReader(decoded_file)
+            print(delimiter)
+            reader = csv.DictReader(decoded_file, delimiter=delimiter)
+            # reader = csv.DictReader(decoded_file)
             for row in reader:
+                print(row)
                 currentAsin = row.get('asin')
                 if currentAsin:
                     existing_lead = category_model.objects.filter(
@@ -141,14 +114,21 @@ class UploadFilesOfLeadList(APIView):
                             existing_lead, data=row, partial=True)
                     else:
                         serializer = serializer_class(data=row)
+
                 else:
-                    continue
+                    # logger.error(serializer.errors)
+                    return CommonApiResponse(data={}, message='failed to import csv file!!', status_code=status.HTTP_400_BAD_REQUEST, errors= "Found Null object!!")
 
                 if serializer.is_valid():
                     serializer.save()
                 else:
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    logger.error(serializer.errors)
+                    return CommonApiResponse(data={}, message='failed to import csv file!!', status_code=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
 
-        return Response({'message': 'Data imported successfully'}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(str(e))
+            return CommonApiResponse(message='failed to import csv file!!', errors = str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return CommonApiResponse(data=reader, message='data imported successfully!!', status_code=status.HTTP_200_OK)
+
