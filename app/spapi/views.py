@@ -1,5 +1,7 @@
 # from apscheduler.schedulers.background import BackgroundScheduler
 # from datetime import datetime
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 from typing import Any
 from rest_framework import viewsets
 from rest_framework.views import APIView
@@ -301,7 +303,6 @@ class ConcurrentAPICallView(GetDataFromSpApi):
     # def get_data(self, asin, marketplace_id):
     #     getCatalogAndFbaFessData = self.getData(asin, marketplace_id)
     #     return getCatalogAndFbaFessData
-
     def fetchCatalogItemApiBulkData(self, asins, marketplace_id):
         formatedAsins = ',' . join(asins);
         path = f"/catalog/2022-04-01/items?identifiers={formatedAsins}&identifiersType=ASIN&marketplaceIds={marketplace_id}&includedData=attributes,images,salesRanks&locale=en_US"
