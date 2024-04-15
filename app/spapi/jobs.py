@@ -1,5 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.core.cache import cache
+from helper.utils.commonApiResponse import CommonApiResponse
 from datetime import datetime
 import requests
 
@@ -60,6 +61,8 @@ class SpApiDataFetchSchedule:
 
     def start_scheduler(self, request, *args, **kwargs):
         self.scheduler.add_job(
-            self.getAutheticationTokenForSp, 'interval', minutes=5)
+            self.getAutheticationTokenForSp, 'interval', minutes=1)
         # self.scheduler.add_job(self.sp_api_call, 'interval', seconds=10)
+        # self.getAutheticationTokenForSp();
         # self.scheduler.start()
+        # self.scheduler.shutdown() # for stop schedular.

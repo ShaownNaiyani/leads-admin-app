@@ -11,6 +11,7 @@ class CustomAuthenticationMiddleware:
         self.jwt_authentication = JWTAuthentication()
 
     def __call__(self, request):
+        print('request coming here!')
         if checkIsNeedAutheticaitonForUrl(request.path):
             response = self.get_response(request)
             return response
