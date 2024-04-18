@@ -34,6 +34,7 @@ def send_email_with_otp_to_user(email, request):
     email_message.send(fail_silently=True)
     # save the otp token in the database for further varification 
     OneTimePassword.objects.create(user=user, code=otp)
+    print(otp)
     
    
 def send_password_reset_link_to_email(data):

@@ -17,3 +17,4 @@ def CommonApiResponse(data=None, message=None, status_code=None, errors=None):
     response.render()
 
     return response
+    

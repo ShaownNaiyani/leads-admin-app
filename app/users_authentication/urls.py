@@ -8,6 +8,7 @@ from .views import (
     PasswordResetRequestApiView,
     PasswordResetConfirmApiView,
     PasswordResetApiView,
+    TestApiView,
 )
 
 
@@ -19,4 +20,5 @@ urlpatterns = [
     path("password-reset/", PasswordResetRequestApiView.as_view(), name="password-reset"),
     path("password-reset-confirm/<uidb64>/<token>/", PasswordResetConfirmApiView.as_view(), name="password-reset-confirm"),
     path("set-new-password/", PasswordResetApiView.as_view(), name="reset-password"),
+    path("test/", TestApiView.as_view(), name="test"),
 ]
