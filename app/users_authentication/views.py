@@ -40,12 +40,16 @@ class UserRegistrationApiView(GenericAPIView):
             # email for email verification
             send_email_with_otp_to_user(email=user["email"], request=request)
             return CommonApiResponse(
-                    data=user,
                     message=f"Hi {user['first_name']}! Thanks for signing up! You will shortly get an email with OTP. Please check  your email account varification.",
+                    data=user,
                     status_code=status.HTTP_201_CREATED
                 )
 
-        return CommonApiResponse(errors=serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+        return CommonApiResponse(
+            message="Registration Failed! Please try again with valid info!", 
+            errors=serializer.errors, 
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class UserEmailVerifyApiView(GenericAPIView):
@@ -74,9 +78,17 @@ class UserLoginApiView(GenericAPIView):
         serializer = self.serializer_class(data=user_data)
 
         if serializer.is_valid(raise_exception=True):
-            return CommonApiResponse(data=serializer.data, message="Login successful!", status_code=status.HTTP_200_OK)
+            return CommonApiResponse(
+                message="Login successful!", 
+                data=serializer.data, 
+                status_code=status.HTTP_200_OK
+            )
 
-        return CommonApiResponse(errors=serializer.errors, status_code=status.HTTP_401_UNAUTHORIZED, message="Login failed!")
+        return CommonApiResponse(
+            message="Login failed!",
+            errors=serializer.errors, 
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+        )
 
 
 class UserLogoutApiView(GenericAPIView):
@@ -89,7 +101,10 @@ class UserLogoutApiView(GenericAPIView):
         serializer = self.serializer_class(data=user_data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return CommonApiResponse(message="Logout successfully!", status_code=status.HTTP_204_NO_CONTENT)
+        return CommonApiResponse(
+            message="Logout successfully!", 
+            status_code=status.HTTP_204_NO_CONTENT
+        )
 
 
 class PasswordResetRequestApiView(GenericAPIView):
@@ -114,18 +129,25 @@ class PasswordResetConfirmApiView(GenericAPIView):
             user = User.objects.get(id=user_id)
 
             if user and PasswordResetTokenGenerator().check_token(user, token):
-                return CommonApiResponse(data={
+                return CommonApiResponse(
+                    message="Please use this uidb & token for password reset request!", 
+                    data={
                         "uidb64": uidb64,
                         "token": token,
-                    }, status_code=status.HTTP_205_RESET_CONTENT)
+                    }, 
+                    status_code=status.HTTP_205_RESET_CONTENT
+                )
 
             return CommonApiResponse(
                     message="The link is invalid or expired!",
-                    status=status.HTTP_401_UNAUTHORIZED
+                    status_code=status.HTTP_401_UNAUTHORIZED
                 )
 
         except DjangoUnicodeDecodeError:
-            return CommonApiResponse(message="Unauthorized attempt!", status_code=status.HTTP_401_UNAUTHORIZED)
+            return CommonApiResponse(
+                message="Unauthorized attempt!", 
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
 
 
 class PasswordResetApiView(GenericAPIView):
@@ -139,13 +161,14 @@ class PasswordResetApiView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
 
         return CommonApiResponse(
-                message="We will receive an email with your new password!", 
+                message="Password reset successfully! You will receive an email with your new password!", 
                 status_code=status.HTTP_200_OK
             )
         
 
 @method_decorator(ratelimit(key='user', rate='5/m', method='GET', block=True), name='dispatch')
 class TestApiView(GenericAPIView):
+    """Experimenting rate limit"""
     def get(self, request):
         return CommonApiResponse(
             data={"message": "Hello World!"}, 
