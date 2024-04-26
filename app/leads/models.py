@@ -16,8 +16,10 @@ class LeadsCategory(models.Model):
 class LeadsDataAbstractModelFields(models.Model):
     asin = models.CharField(max_length=255, unique=True, primary_key=True,
                             blank=False, null=False, verbose_name="ASIN", db_column='asin')
+    category_id = models.PositiveIntegerField(
+        default=0, verbose_name="CategoryId")
     product_name = models.CharField(max_length=255,
-                                    blank=True, null=True, verbose_name="product_name")
+                                    blank=True, null=True, verbose_name="ProductName")
     amazon_fba_estimated_fees = models.DecimalField(blank=True, null=True,
                                                     max_digits=10, decimal_places=6, verbose_name="AmazonFBAEstimatedFees")
     amazon_price = models.DecimalField(blank=True, null=True,
