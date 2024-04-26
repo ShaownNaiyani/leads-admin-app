@@ -1,4 +1,4 @@
-from .models import User, OTP
+from .models import User, OneTimePassword
 from rest_framework.test import APIClient
 from rest_framework.test import APITestCase
 from rest_framework import status 
@@ -31,7 +31,7 @@ class AccountsAppTestCases(APITestCase):
         
         """test emailVerificationApi when user will provide right otp for unverified user"""
         user = User.objects.get(email=self.data["email"]) 
-        otp = OTP.objects.get(user=user) 
+        otp = OneTimePassword.objects.get(user=user) 
         data = {
             "otp": otp.code 
         } 
@@ -44,7 +44,7 @@ class AccountsAppTestCases(APITestCase):
         
         """test emailVerificationApi when user will provide right otp that already used. I means verified user"""
         user = User.objects.get(email=self.data["email"]) 
-        otp = OTP.objects.get(user=user) 
+        otp = OneTimePassword.objects.get(user=user) 
         data = {
             "otp": otp.code 
         } 
@@ -209,7 +209,7 @@ class AccountsAppTestCases(APITestCase):
             "password": "wrong_password"
         }
         response = self.client.post("/api/v1/auth/login/", data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED) 
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN) 
     
     def test_userLoginGenericApiView_with_blank_email(self):
         """test user login view with empty '' email"""

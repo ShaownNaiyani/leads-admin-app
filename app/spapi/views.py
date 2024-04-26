@@ -1,6 +1,6 @@
 # from apscheduler.schedulers.background import BackgroundScheduler
 # from datetime import datetime
-from django_ratelimit.decorators import ratelimit
+# from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
 from typing import Any
 from rest_framework import viewsets

@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.utils.decorators import method_decorator
-from django_ratelimit.decorators import ratelimit 
+# from django_ratelimit.decorators import ratelimit 
 from helper.utils.commonApiResponse import CommonApiResponse
 
 # custom models
@@ -168,11 +168,11 @@ class PasswordResetApiView(GenericAPIView):
             )
         
 
-@method_decorator(ratelimit(key='user', rate='5/m', method='GET', block=True), name='dispatch')
-class TestApiView(GenericAPIView):
-    """Experimenting rate limit"""
-    def get(self, request):
-        return CommonApiResponse(
-            data={"message": "Hello World!"}, 
-            status=status.HTTP_200_OK
-        )
+# @method_decorator(ratelimit(key='user', rate='5/m', method='GET', block=True), name='dispatch')
+# class TestApiView(GenericAPIView):
+#     """Experimenting rate limit"""
+#     def get(self, request):
+#         return CommonApiResponse(
+#             data={"message": "Hello World!"}, 
+#             status=status.HTTP_200_OK
+#         )
