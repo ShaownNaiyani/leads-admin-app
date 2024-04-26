@@ -6,6 +6,9 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from django.utils.decorators import method_decorator
+# from django_ratelimit.decorators import ratelimit 
+from helper.utils.commonApiResponse import CommonApiResponse
 
 # custom models
 from .serializers import (
@@ -36,12 +39,17 @@ class UserRegistrationApiView(GenericAPIView):
             # Now we have to send an otp through registered
             # email for email verification
             send_email_with_otp_to_user(email=user["email"], request=request)
-            return Response({
-                    "data": user,
-                    "message": f"Hi {user['first_name']}! Thanks for signing up! You will shortly get an email with OTP. Please check  your email account varification."
-                }, status=status.HTTP_201_CREATED)
+            return CommonApiResponse(
+                    message=f"Hi {user['first_name']}! Thanks for signing up! You will shortly get an email with OTP. Please check  your email account varification.",
+                    data=user,
+                    status_code=status.HTTP_201_CREATED
+                )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return CommonApiResponse(
+            message="Registration Failed! Please try again with valid info!", 
+            errors=serializer.errors, 
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class UserEmailVerifyApiView(GenericAPIView):
@@ -54,12 +62,12 @@ class UserEmailVerifyApiView(GenericAPIView):
             if not user.is_verified:
                 user.is_verified = True
                 user.save()
-                return Response({"message": "Account verified successfully!"}, status=status.HTTP_200_OK)
+                return CommonApiResponse(message="Account verified successfully!", status_code=status.HTTP_200_OK)
 
-            return Response({"message": "Account already verified!"}, status=status.HTTP_204_NO_CONTENT)
+            return CommonApiResponse(message="Account already verified!", status_code=status.HTTP_204_NO_CONTENT)
 
         except OneTimePassword.DoesNotExist:
-            return Response({"Invalid OTP!"}, status=status.HTTP_404_NOT_FOUND)
+            return CommonApiResponse(message="Invalid OTP!", status_code=status.HTTP_404_NOT_FOUND)
 
 
 class UserLoginApiView(GenericAPIView):
@@ -69,10 +77,20 @@ class UserLoginApiView(GenericAPIView):
         user_data = request.data
         serializer = self.serializer_class(data=user_data)
 
-        if serializer.is_valid(raise_exception=True):
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            if serializer.is_valid(raise_exception=True):
+                return CommonApiResponse(
+                    message="Login successful!", 
+                    data=serializer.data, 
+                    status_code=status.HTTP_200_OK
+                )
+        except:
+            serializer.is_valid()
+            return CommonApiResponse(
+                message="Email or password wrong!",
+                errors=serializer.errors, 
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+            )
 
 
 class UserLogoutApiView(GenericAPIView):
@@ -85,7 +103,10 @@ class UserLogoutApiView(GenericAPIView):
         serializer = self.serializer_class(data=user_data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"message": "Logout successfully!"}, status=status.HTTP_204_NO_CONTENT)
+        return CommonApiResponse(
+            message="Logout successfully!", 
+            status_code=status.HTTP_204_NO_CONTENT
+        )
 
 
 class PasswordResetRequestApiView(GenericAPIView):
@@ -96,9 +117,10 @@ class PasswordResetRequestApiView(GenericAPIView):
         serializer = self.serializer_class(data=user_data, context={"request": request})
         serializer.is_valid(raise_exception=True)
 
-        return Response({
-                "message": "Please check your email for password reset link!"
-            }, status=status.HTTP_205_RESET_CONTENT)
+        return CommonApiResponse(
+                message="Please check your email for password reset link!",
+                status_code=status.HTTP_205_RESET_CONTENT
+            )
 
 
 class PasswordResetConfirmApiView(GenericAPIView):
@@ -109,17 +131,25 @@ class PasswordResetConfirmApiView(GenericAPIView):
             user = User.objects.get(id=user_id)
 
             if user and PasswordResetTokenGenerator().check_token(user, token):
-                return Response({
+                return CommonApiResponse(
+                    message="Please use this uidb & token for password reset request!", 
+                    data={
                         "uidb64": uidb64,
                         "token": token,
-                    }, status=status.HTTP_205_RESET_CONTENT)
+                    }, 
+                    status_code=status.HTTP_205_RESET_CONTENT
+                )
 
-            return Response({
-                    "message": "The link is invalid or expired!"
-                }, status=status.HTTP_401_UNAUTHORIZED)
+            return CommonApiResponse(
+                    message="The link is invalid or expired!",
+                    status_code=status.HTTP_401_UNAUTHORIZED
+                )
 
         except DjangoUnicodeDecodeError:
-            return Response({"message": "Unauthorized attempt!"}, status=status.HTTP_401_UNAUTHORIZED)
+            return CommonApiResponse(
+                message="Unauthorized attempt!", 
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
 
 
 class PasswordResetApiView(GenericAPIView):
@@ -132,6 +162,17 @@ class PasswordResetApiView(GenericAPIView):
 
         serializer.is_valid(raise_exception=True)
 
-        return Response({
-                "message": "We will receive an email with your new password!"
-            }, status=status.HTTP_200_OK)
+        return CommonApiResponse(
+                message="Password reset successfully! You will receive an email with your new password!", 
+                status_code=status.HTTP_200_OK
+            )
+        
+
+# @method_decorator(ratelimit(key='user', rate='5/m', method='GET', block=True), name='dispatch')
+# class TestApiView(GenericAPIView):
+#     """Experimenting rate limit"""
+#     def get(self, request):
+#         return CommonApiResponse(
+#             data={"message": "Hello World!"}, 
+#             status=status.HTTP_200_OK
+#         )
