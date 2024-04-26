@@ -100,11 +100,9 @@ class UploadFilesOfLeadList(APIView):
 
         try:
             decoded_file = file.read().decode('utf-8').splitlines()
-            print(delimiter)
             reader = csv.DictReader(decoded_file, delimiter=delimiter)
             # reader = csv.DictReader(decoded_file)
             for row in reader:
-                print(row)
                 currentAsin = row.get('asin')
                 if currentAsin:
                     existing_lead = category_model.objects.filter(
