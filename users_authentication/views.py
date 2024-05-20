@@ -44,7 +44,7 @@ class UserRegistrationApiView(GenericAPIView):
                     data=user,
                     status_code=status.HTTP_201_CREATED
                 )
-
+ 
         return CommonApiResponse(
             message="Registration Failed! Please try again with valid info!", 
             errors=serializer.errors, 
