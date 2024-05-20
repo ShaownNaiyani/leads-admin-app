@@ -10,5 +10,6 @@ urlpatterns += [
     path('admin/', admin.site.urls),
     path('spapi/', include('spapi.urls')),
     path('leads/', include('leads.urls')),
-    path('api/v1/auth/', include("users_authentication.urls"))
+    path('api/v1/auth/', include("users_authentication.urls")),
+    path("api/v1/payment/", include("payment.urls")),
 ]
